@@ -1,4 +1,4 @@
-name: markdown_preview
+name: blog_markdown_editor
 description: A new Flutter project.
 
 # The following line prevents the package from being accidentally published to
@@ -37,6 +37,7 @@ dependencies:
   flutter_markdown: ^0.6.10+3
   file_picker: ^5.0.1
   hotkey_manager: ^0.1.7
+  split_view: ^3.2.1
 
 dev_dependencies:
   flutter_test:
