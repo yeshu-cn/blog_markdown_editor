@@ -51,7 +51,6 @@ class _MyHomePageState extends State<MyHomePage> {
 
   @override
   void initState() {
-
     _initHotKey();
     super.initState();
   }
@@ -96,11 +95,16 @@ class _MyHomePageState extends State<MyHomePage> {
                 }
               },
               icon: const Icon(Icons.folder_open_rounded)),
-          IconButton(onPressed: () async {
-            if (null != _currentFile) {
-              saveFile(_currentFile!);
-            }
-          }, icon: Icon(Icons.save, color: _fileChanged ? Colors.blue : Colors.white,)),
+          IconButton(
+              onPressed: () async {
+                if (null != _currentFile) {
+                  saveFile(_currentFile!);
+                }
+              },
+              icon: Icon(
+                Icons.save,
+                color: _fileChanged ? Colors.blue : Colors.white,
+              )),
         ],
       ),
       body: Row(
@@ -135,7 +139,12 @@ class _MyHomePageState extends State<MyHomePage> {
             ),
           ),
           const VerticalDivider(),
-          Expanded(child: Markdown(data: _controller.text, imageDirectory: '${_currentFile!.parent.path}${Platform.pathSeparator}',)),
+          Expanded(
+              child: Markdown(
+                // 预览的时候去掉头部的数据信息
+            data: _controller.text.replaceFirstMapped(RegExp(r'---[\s\S]*---'), (match) => ''),
+            imageDirectory: '${_currentFile!.parent.path}${Platform.pathSeparator}',
+          )),
         ],
       ),
     );
@@ -162,16 +171,12 @@ class _MyHomePageState extends State<MyHomePage> {
   void openFile(File file) async {
     _currentFile = file;
     _controller.text = await file.readAsString();
-    setState(() {
-
-    });
+    setState(() {});
   }
 
   void saveFile(File file) async {
     await file.writeAsString(_controller.text);
     _fileChanged = false;
-    setState(() {
-
-    });
+    setState(() {});
   }
 }
