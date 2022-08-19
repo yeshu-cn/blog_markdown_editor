@@ -18,12 +18,12 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Markdown Preview',
+      title: 'Blog Markdown Editor',
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
         primarySwatch: Colors.brown,
       ),
-      home: const MyHomePage(title: 'Markdown Preview'),
+      home: const MyHomePage(title: 'Blog Markdown Editor'),
     );
   }
 }
@@ -125,6 +125,7 @@ class _MyHomePageState extends State<MyHomePage> {
                 child: TextField(
                   maxLines: null,
                   onChanged: (str) {
+                    _fileChanged = true;
                     setState(() {});
                   },
                   decoration: const InputDecoration(border: InputBorder.none),
@@ -134,7 +135,7 @@ class _MyHomePageState extends State<MyHomePage> {
             ),
           ),
           const VerticalDivider(),
-          Expanded(child: Markdown(data: _controller.text)),
+          Expanded(child: Markdown(data: _controller.text, imageDirectory: '${_currentFile!.parent.path}${Platform.pathSeparator}',)),
         ],
       ),
     );
@@ -168,5 +169,9 @@ class _MyHomePageState extends State<MyHomePage> {
 
   void saveFile(File file) async {
     await file.writeAsString(_controller.text);
+    _fileChanged = false;
+    setState(() {
+
+    });
   }
 }
