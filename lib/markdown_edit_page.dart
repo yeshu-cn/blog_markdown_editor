@@ -38,6 +38,7 @@ class _MarkdownEditPageState extends State<MarkdownEditPage> {
   @override
   void initState() {
     _initHotKey();
+    _controller.text = widget.file.readAsStringSync();
     super.initState();
   }
 
@@ -158,7 +159,9 @@ class _MarkdownEditPageState extends State<MarkdownEditPage> {
           icon: const MacosIcon(
             CupertinoIcons.play,
           ),
-          onPressed: () => MacosWindowScope.of(context).toggleSidebar(),
+          onPressed: () => (){
+            // Process.run(executable, arguments);
+          },
           showLabel: true,
         ),
         ToolBarIconButton(

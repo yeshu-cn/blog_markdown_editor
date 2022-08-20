@@ -1,5 +1,4 @@
 import 'dart:io';
-
 import 'package:blog_markdown_editor/markdown_edit_page.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/cupertino.dart';
@@ -16,7 +15,6 @@ class HomePage extends StatefulWidget {
 class _HomePageState extends State<HomePage> {
   final searchFieldController = TextEditingController();
 
-  final TextEditingController _controller = TextEditingController();
   Directory? _sourceDir;
   File? _currentFile;
 
@@ -28,7 +26,7 @@ class _HomePageState extends State<HomePage> {
         sidebar: _buildSideBar(),
         endSidebar: _buildEndSideBar(),
         child: null == _currentFile
-            ? const Text('empty')
+            ? const Center(child: Text('Hello Markdown'))
             : MarkdownEditPage(_currentFile!),
       ),
     );
