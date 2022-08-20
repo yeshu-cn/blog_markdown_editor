@@ -1,8 +1,12 @@
 import 'dart:io';
+import 'package:blog_markdown_editor/home_page.dart';
+import 'package:blog_markdown_editor/theme.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_markdown/flutter_markdown.dart';
 import 'package:hotkey_manager/hotkey_manager.dart';
+import 'package:macos_ui/macos_ui.dart';
+import 'package:provider/provider.dart';
 import 'package:split_view/split_view.dart';
 
 void main() async {
@@ -18,11 +22,19 @@ class MyApp extends StatelessWidget {
   // This widget is the root of your application.
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'Markdown Editor',
-      debugShowCheckedModeBanner: false,
-      theme: ThemeData(primarySwatch: Colors.teal),
-      home: const MyHomePage(title: 'Markdown Editor'),
+    return ChangeNotifierProvider(
+      create: (_) => AppTheme(),
+      builder: (context, _) {
+        final appTheme = context.watch<AppTheme>();
+        return MacosApp(
+          title: 'Markdown Editor',
+          theme: MacosThemeData.light(),
+          darkTheme: MacosThemeData.dark(),
+          themeMode: appTheme.mode,
+          debugShowCheckedModeBanner: false,
+          home: const HomePage(),
+        );
+      },
     );
   }
 }
