@@ -27,8 +27,15 @@ class _HomePageState extends State<HomePage> {
   final TextEditingController _controller = TextEditingController();
   var lastEditTime = 0;
 
-  final HotKey _hotKey = HotKey(
+  final HotKey _hotSaveKey = HotKey(
     KeyCode.keyS,
+    modifiers: [KeyModifier.meta],
+    // Set hotkey scope (default is HotKeyScope.system)
+    scope: HotKeyScope.inapp, // Set as inapp-wide hotkey.
+  );
+
+  final HotKey _hotCloseTabKey = HotKey(
+    KeyCode.keyW,
     modifiers: [KeyModifier.meta],
     // Set hotkey scope (default is HotKeyScope.system)
     scope: HotKeyScope.inapp, // Set as inapp-wide hotkey.
@@ -36,10 +43,20 @@ class _HomePageState extends State<HomePage> {
 
   void _initHotKey() async {
     await hotKeyManager.register(
-      _hotKey,
+      _hotSaveKey,
       keyDownHandler: (hotKey) {
         if (null != _currentFile) {
           _saveFile();
+        }
+      },
+    );
+    await hotKeyManager.register(
+      _hotCloseTabKey,
+      keyDownHandler: (hotKey) {
+        if (null != _currentFile) {
+          if (null != _currentFile) {
+            _closeEditFile(_currentFile!);
+          }
         }
       },
     );
@@ -134,8 +151,7 @@ class _HomePageState extends State<HomePage> {
     var fileName = getFileName(filePath);
     return GestureDetector(
       onTap: () {
-        _currentFile = filePath;
-        setState(() {});
+        _editFile(filePath);
       },
       child: Container(
         width: 240,
@@ -415,6 +431,7 @@ class _HomePageState extends State<HomePage> {
 
     _currentFile = file;
     _controller.text = File(_currentFile!).readAsStringSync();
+
     if (!_openFileList.contains(file)) {
       _openFileList.add(file);
     }
@@ -427,6 +444,9 @@ class _HomePageState extends State<HomePage> {
 
     updateCurrentFile(file);
     _openFileList.remove(file);
+    if (null != _currentFile) {
+      _controller.text = File(_currentFile!).readAsStringSync();
+    }
     setState(() {});
   }
 
@@ -519,16 +539,16 @@ class _HomePageState extends State<HomePage> {
 
   // 输入字符后，2秒内没有新的输入，则自动保存文件内容
   void _checkAutoSave() {
-    lastEditTime = DateTime.now().millisecondsSinceEpoch;
-    Future.delayed(const Duration(seconds: 2)).then((value) {
-      if (DateTime.now().millisecondsSinceEpoch - lastEditTime > 2 * 1000) {
-        _saveFile();
-      }
-    });
+    // lastEditTime = DateTime.now().millisecondsSinceEpoch;
+    // Future.delayed(const Duration(seconds: 2)).then((value) {
+    //   if (DateTime.now().millisecondsSinceEpoch - lastEditTime > 2 * 1000) {
+    //     _saveFile();
+    //   }
+    // });
   }
 
-  void _saveFile() async {
+  void _saveFile() {
     var file = File(_currentFile!);
-    await file.writeAsString(_controller.text);
+    file.writeAsStringSync(_controller.text);
   }
 }
