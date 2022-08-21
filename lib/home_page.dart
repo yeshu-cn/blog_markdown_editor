@@ -19,12 +19,13 @@ class HomePage extends StatefulWidget {
 class _HomePageState extends State<HomePage> {
   final searchFieldController = TextEditingController();
 
-  Directory? _sourceDir;
+  Directory? _postSourceDir;
   String? _currentFile;
 
   final List<String> _openFileList = [];
 
   final TextEditingController _controller = TextEditingController();
+  final TextEditingController _controllerNewFile = TextEditingController();
   var lastEditTime = 0;
 
   final HotKey _hotSaveKey = HotKey(
@@ -62,9 +63,20 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
+  void _initSourceDir() async {
+    var sourceDir = await getSourceDir();
+    if (null != sourceDir) {
+      _postSourceDir = Directory(getBlogPostSourceDir(sourceDir));
+      setState(() {
+
+      });
+    }
+  }
+
   @override
   void initState() {
     _initHotKey();
+    _initSourceDir();
     super.initState();
   }
 
@@ -259,7 +271,31 @@ class _HomePageState extends State<HomePage> {
           icon: const MacosIcon(
             CupertinoIcons.doc_text,
           ),
-          onPressed: () => debugPrint("New"),
+          onPressed: () {
+            showMacosAlertDialog(
+                context: context,
+                builder: (controller) {
+                  return MacosAlertDialog(
+                      appIcon: const MacosIcon(CupertinoIcons.doc_text),
+                      title: const Text('Create New File'),
+                      message: MacosTextField(
+                        controller: _controllerNewFile,
+                        placeholder: 'Input file Name',
+                      ),
+                      primaryButton: PushButton(
+                        buttonSize: ButtonSize.large,
+                        onPressed: () {
+                          Navigator.of(context).pop;
+                        },
+                        child: const Text('Confirm'),
+                      ),
+                      secondaryButton: PushButton(
+                        buttonSize: ButtonSize.large,
+                        onPressed: Navigator.of(context).pop,
+                        child: const Text('Cancel'),
+                      ));
+                });
+          },
           label: "New",
           showLabel: true,
           tooltipMessage: "New File",
@@ -277,7 +313,28 @@ class _HomePageState extends State<HomePage> {
           icon: const MacosIcon(
             CupertinoIcons.trash,
           ),
-          onPressed: () => debugPrint("pressed"),
+          onPressed: () {
+            if (null != _currentFile) {
+              showMacosAlertDialog(
+                  context: context,
+                  builder: (controller) {
+                    return MacosAlertDialog(
+                        appIcon: MacosIcon(CupertinoIcons.trash),
+                        title: Text('Confirm Detete'),
+                        message: Text(getFileName(_currentFile!)),
+                        primaryButton: PushButton(
+                          buttonSize: ButtonSize.large,
+                          onPressed: Navigator.of(context).pop,
+                          child: const Text('Confirm'),
+                        ),
+                        secondaryButton: PushButton(
+                          buttonSize: ButtonSize.large,
+                          onPressed: Navigator.of(context).pop,
+                          child: const Text('Cancel'),
+                        ));
+                  });
+            }
+          },
           showLabel: true,
         ),
         const ToolBarDivider(),
@@ -294,8 +351,8 @@ class _HomePageState extends State<HomePage> {
           icon: const MacosIcon(
             CupertinoIcons.play,
           ),
-          onPressed: () => () {
-            // Process.run(executable, arguments);
+          onPressed: () {
+            runBlogS();
           },
           showLabel: true,
         ),
@@ -380,7 +437,8 @@ class _HomePageState extends State<HomePage> {
   void _openFolder() async {
     String? selectedDirectory = await FilePicker.platform.getDirectoryPath();
     if (selectedDirectory != null) {
-      _sourceDir = Directory(selectedDirectory);
+      await saveSourceDir(selectedDirectory);
+      _postSourceDir = Directory(getBlogPostSourceDir(selectedDirectory));
       setState(() {});
     }
   }
@@ -400,7 +458,7 @@ class _HomePageState extends State<HomePage> {
   }
 
   Widget _buildTop() {
-    int fileCount = _sourceDir?.listSync().length ?? 0;
+    int fileCount = _postSourceDir?.listSync().length ?? 0;
     return Padding(
       padding: const EdgeInsets.only(left: 10, bottom: 8, top: 8),
       child: Row(
@@ -419,7 +477,7 @@ class _HomePageState extends State<HomePage> {
   }
 
   List<Widget> _buildFileListWidget() {
-    var list = _sourceDir!.listSync().map((e) => _buildFileItem(e)).toList();
+    var list = _postSourceDir!.listSync().map((e) => _buildFileItem(e)).toList();
     return list;
   }
 
@@ -511,7 +569,7 @@ class _HomePageState extends State<HomePage> {
   }
 
   Widget _buildFileList(ScrollController controller) {
-    if (null == _sourceDir) {
+    if (null == _postSourceDir) {
       return Padding(
         padding: const EdgeInsets.only(top: 10, bottom: 10),
         child: Column(
@@ -550,5 +608,15 @@ class _HomePageState extends State<HomePage> {
   void _saveFile() {
     var file = File(_currentFile!);
     file.writeAsStringSync(_controller.text);
+  }
+
+  void _createNewFile(String fileName) {
+    var newFile = File(fileName);
+    if (newFile.existsSync()) {
+    } else {
+      newFile.create();
+      newFile.writeAsStringSync('---');
+      newFile.writeAsStringSync('---');
+    }
   }
 }
