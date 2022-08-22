@@ -1,4 +1,6 @@
 import 'dart:io';
+import 'package:blog_markdown_editor/app_dialog.dart';
+import 'package:blog_markdown_editor/blog_utils.dart';
 import 'package:blog_markdown_editor/utils.dart';
 import 'package:collection/collection.dart';
 import 'package:file_picker/file_picker.dart';
@@ -67,9 +69,8 @@ class _HomePageState extends State<HomePage> {
     var sourceDir = await getSourceDir();
     if (null != sourceDir) {
       _postSourceDir = Directory(getBlogPostSourceDir(sourceDir));
-      setState(() {
-
-      });
+      BlogUtils.init(sourceDir);
+      setState(() {});
     }
   }
 
@@ -271,31 +272,7 @@ class _HomePageState extends State<HomePage> {
           icon: const MacosIcon(
             CupertinoIcons.doc_text,
           ),
-          onPressed: () {
-            showMacosAlertDialog(
-                context: context,
-                builder: (controller) {
-                  return MacosAlertDialog(
-                      appIcon: const MacosIcon(CupertinoIcons.doc_text),
-                      title: const Text('Create New File'),
-                      message: MacosTextField(
-                        controller: _controllerNewFile,
-                        placeholder: 'Input file Name',
-                      ),
-                      primaryButton: PushButton(
-                        buttonSize: ButtonSize.large,
-                        onPressed: () {
-                          Navigator.of(context).pop;
-                        },
-                        child: const Text('Confirm'),
-                      ),
-                      secondaryButton: PushButton(
-                        buttonSize: ButtonSize.large,
-                        onPressed: Navigator.of(context).pop,
-                        child: const Text('Cancel'),
-                      ));
-                });
-          },
+          onPressed: _createNewFile,
           label: "New",
           showLabel: true,
           tooltipMessage: "New File",
@@ -319,12 +296,15 @@ class _HomePageState extends State<HomePage> {
                   context: context,
                   builder: (controller) {
                     return MacosAlertDialog(
-                        appIcon: MacosIcon(CupertinoIcons.trash),
-                        title: Text('Confirm Detete'),
+                        appIcon: const MacosIcon(CupertinoIcons.trash),
+                        title: const Text('Confirm Delete'),
                         message: Text(getFileName(_currentFile!)),
                         primaryButton: PushButton(
                           buttonSize: ButtonSize.large,
-                          onPressed: Navigator.of(context).pop,
+                          onPressed: (){
+                            Navigator.pop(controller);
+                            _deleteFile();
+                          },
                           child: const Text('Confirm'),
                         ),
                         secondaryButton: PushButton(
@@ -343,7 +323,7 @@ class _HomePageState extends State<HomePage> {
           icon: const MacosIcon(
             CupertinoIcons.archivebox,
           ),
-          onPressed: () => debugPrint("Table..."),
+          onPressed: () => generateApiFile(),
           showLabel: true,
         ),
         ToolBarIconButton(
@@ -410,7 +390,7 @@ class _HomePageState extends State<HomePage> {
       ),
       minWidth: 200,
       builder: (context, controller) {
-        return _buildFileList(controller);
+        return _buildPostFileList(controller);
       },
       top: _buildTop(),
       bottom: _buildBottom(),
@@ -427,18 +407,19 @@ class _HomePageState extends State<HomePage> {
             color: Colors.black45,
           ),
           onTap: () {
-            _openFolder();
+            _openSourceDir();
           },
         ),
       ],
     );
   }
 
-  void _openFolder() async {
+  void _openSourceDir() async {
     String? selectedDirectory = await FilePicker.platform.getDirectoryPath();
     if (selectedDirectory != null) {
       await saveSourceDir(selectedDirectory);
       _postSourceDir = Directory(getBlogPostSourceDir(selectedDirectory));
+      BlogUtils.init(selectedDirectory);
       setState(() {});
     }
   }
@@ -476,8 +457,15 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
-  List<Widget> _buildFileListWidget() {
-    var list = _postSourceDir!.listSync().map((e) => _buildFileItem(e)).toList();
+  List<Widget> _buildPostFileListWidget() {
+    var fileList = _postSourceDir!
+        .listSync()
+        .sortedBy((element) => getFileName(element.path));
+    // 过滤调.DS_Store等隐藏文件
+    var availableFileList = fileList.where((element) {
+      return !getFileName(element.path).startsWith(".");
+    });
+    var list = availableFileList.map((e) => _buildFileItem(e)).toList();
     return list;
   }
 
@@ -530,7 +518,9 @@ class _HomePageState extends State<HomePage> {
   }
 
   Widget _buildFileItem(FileSystemEntity entity) {
-    var name = entity.path.split(Platform.pathSeparator).last;
+    // 去掉后缀名
+    var name =
+        entity.path.split(Platform.pathSeparator).last.replaceAll(".md", "");
     return GestureDetector(
       onTap: () async {
         if (entity is File) {
@@ -548,8 +538,7 @@ class _HomePageState extends State<HomePage> {
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(6),
             // 当前选中到文件，显示高亮
-            // todo 目录选中还不会高亮
-            color: name == getFileName(_currentFile ?? '')
+            color: name == getFileName(_currentFile ?? '').replaceAll('.md', '')
                 ? const Color(0xffc5c2c7)
                 : Colors.transparent,
           ),
@@ -568,7 +557,7 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
-  Widget _buildFileList(ScrollController controller) {
+  Widget _buildPostFileList(ScrollController controller) {
     if (null == _postSourceDir) {
       return Padding(
         padding: const EdgeInsets.only(top: 10, bottom: 10),
@@ -589,7 +578,7 @@ class _HomePageState extends State<HomePage> {
         padding: const EdgeInsets.only(top: 10, bottom: 10),
         child: ListView(
           controller: controller,
-          children: _buildFileListWidget(),
+          children: _buildPostFileListWidget(),
         ),
       );
     }
@@ -610,13 +599,68 @@ class _HomePageState extends State<HomePage> {
     file.writeAsStringSync(_controller.text);
   }
 
-  void _createNewFile(String fileName) {
-    var newFile = File(fileName);
-    if (newFile.existsSync()) {
+  void _createNewFile() {
+    showDialog(
+        context: context,
+        barrierDismissible: false,
+        builder: (buildContext) {
+          return AppDialog(
+              title: 'Create File',
+              rightBtn: ElevatedButton(
+                onPressed: () {
+                  Navigator.pop(buildContext);
+                  if (_controllerNewFile.text.trim().isEmpty) {
+                    return;
+                  }
+                  Navigator.of(context).pop;
+                  _onCreateFileConfirm();
+                },
+                child: const Text('Confirm'),
+              ),
+              leftBtn: ElevatedButton(
+                onPressed: () {
+                  Navigator.pop(buildContext);
+                },
+                child: const Text('Cancel'),
+              ),
+              child: MacosTextField(
+                controller: _controllerNewFile,
+                placeholder: 'Input file Name',
+              ));
+        });
+  }
+
+  void _onCreateFileConfirm() {
+    var fileName = _controllerNewFile.text.trim();
+    var ret = BlogUtils.createNetPost(fileName);
+    if (!ret) {
+      _showErrorMsg('Create New Post Failed: $fileName already exit');
     } else {
-      newFile.create();
-      newFile.writeAsStringSync('---');
-      newFile.writeAsStringSync('---');
+      var filePath = BlogUtils.getPostFilePath(fileName);
+      _editFile(filePath);
     }
+  }
+
+  void _deleteFile() {
+
+  }
+
+  void _showErrorMsg(String msg) {
+    showMacosAlertDialog(
+        context: context,
+        builder: (context) {
+          return MacosAlertDialog(
+            appIcon: const MacosIcon(CupertinoIcons.doc_text),
+            title: const Text('Create New File'),
+            message: Text(msg),
+            primaryButton: PushButton(
+              buttonSize: ButtonSize.large,
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+              child: const Text('确认'),
+            ),
+          );
+        });
   }
 }
