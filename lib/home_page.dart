@@ -109,7 +109,11 @@ class _HomePageState extends State<HomePage> {
       ContentArea(builder: (_, __) {
         return Column(
           children: [
-            _buildOpenTabs(),
+            Row(
+              children: [
+                Expanded(child: _buildOpenTabs()),
+              ],
+            ),
             Expanded(
                 child: SplitView(
               controller: SplitViewController(weights: [0.5, 0.5]),
@@ -134,9 +138,10 @@ class _HomePageState extends State<HomePage> {
   Widget _buildOpenTabs() {
     return Container(
       color: const Color(0xffF7F5F5),
-      child: Row(
-        mainAxisSize: MainAxisSize.max,
-        mainAxisAlignment: MainAxisAlignment.start,
+      height: 40,
+      child: ListView(
+        controller: ScrollController(),
+        scrollDirection: Axis.horizontal,
         children: _buildTabs(),
       ),
     );
@@ -167,7 +172,7 @@ class _HomePageState extends State<HomePage> {
         _editFile(filePath);
       },
       child: Container(
-        width: 240,
+        width: 200,
         decoration: BoxDecoration(
             color:
                 highLight ? const Color(0xffffffff) : const Color(0xffF7F5F5),
@@ -301,7 +306,7 @@ class _HomePageState extends State<HomePage> {
                         message: Text(getFileName(_currentFile!)),
                         primaryButton: PushButton(
                           buttonSize: ButtonSize.large,
-                          onPressed: (){
+                          onPressed: () {
                             Navigator.pop(controller);
                             _deleteFile();
                           },
@@ -458,9 +463,7 @@ class _HomePageState extends State<HomePage> {
   }
 
   List<Widget> _buildPostFileListWidget() {
-    var fileList = _postSourceDir!
-        .listSync()
-        .sortedBy((element) => getFileName(element.path));
+    var fileList = _postSourceDir!.listSync();
     // 过滤调.DS_Store等隐藏文件
     var availableFileList = fileList.where((element) {
       return !getFileName(element.path).startsWith(".");
@@ -641,9 +644,7 @@ class _HomePageState extends State<HomePage> {
     }
   }
 
-  void _deleteFile() {
-
-  }
+  void _deleteFile() {}
 
   void _showErrorMsg(String msg) {
     showMacosAlertDialog(
