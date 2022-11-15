@@ -1,8 +1,10 @@
 import 'dart:io';
 import 'package:blog_markdown_editor/home_model.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_markdown/flutter_markdown.dart';
 import 'package:hotkey_manager/hotkey_manager.dart';
+import 'package:pasteboard/pasteboard.dart';
 import 'package:provider/provider.dart';
 import 'package:split_view/split_view.dart';
 
@@ -24,6 +26,12 @@ class _HomePageState extends State<HomePage> {
     scope: HotKeyScope.inapp, // Set as inapp-wide hotkey.
   );
 
+  final _copyHotKey = HotKey(
+    KeyCode.keyV,
+    modifiers: [KeyModifier.meta],
+    scope: HotKeyScope.inapp, // Set as inapp-wide hotkey.
+  );
+
   @override
   void initState() {
     _initHotKey();
@@ -31,12 +39,20 @@ class _HomePageState extends State<HomePage> {
   }
 
   void _initHotKey() async {
+    var model = Provider.of<HomeModel>(context, listen: false);
     await hotKeyManager.register(
       _hotKey,
       keyDownHandler: (hotKey) {
         debugPrint('onKeyDown+${hotKey.toJson()}');
-        var model = Provider.of<HomeModel>(context, listen: false);
         model.saveFile(_controller.text);
+      },
+    );
+
+    await hotKeyManager.register(
+      _copyHotKey,
+      keyDownHandler: (hotKey) {
+        debugPrint('onKeyDown+${hotKey.toJson()}');
+        _handleCopy(model);
       },
     );
   }
@@ -323,6 +339,39 @@ class _HomePageState extends State<HomePage> {
     if (ret) {
       _controller.text = '';
       model.deleteFile();
+    }
+  }
+
+  void _handleCopy(HomeModel model) async {
+    ClipboardData? cdata = await Clipboard.getData(Clipboard.kTextPlain);
+    debugPrint(cdata?.text);
+    final imageBytes = await Pasteboard.image;
+    debugPrint('image bytes length: ${imageBytes?.length}');
+    if (null != imageBytes) {
+      var imagePath = await model.savePostImage(imageBytes);
+      // 光标处添加字符
+      var cursorPos =
+          _controller.selection.base.offset;
+      // Right text of cursor position
+      String suffixText =
+      _controller.text.substring(cursorPos);
+
+      // Add new text on cursor position
+      String specialChars = '![]($imagePath)';
+      int length = specialChars.length;
+
+      // Get the left text of cursor
+      String prefixText =
+      _controller.text.substring(0, cursorPos);
+
+      _controller.text =
+          prefixText + specialChars + suffixText;
+
+      // Cursor move to end of added text
+      _controller.selection = TextSelection(
+        baseOffset: cursorPos + length,
+        extentOffset: cursorPos + length,
+      );
     }
   }
 }

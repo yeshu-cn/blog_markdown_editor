@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'dart:typed_data';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:intl/intl.dart';
@@ -97,6 +98,18 @@ class HomeModel extends ChangeNotifier {
 
   String _getPostDirPath(String postName) {
     return "${getPostSourcePath()}${Platform.pathSeparator}$postName";
+  }
+
+  String _getPostImagePath(String postName) {
+    var imageName = DateTime.now().millisecondsSinceEpoch;
+    return "${getPostSourcePath()}${Platform.pathSeparator}$postName${Platform.pathSeparator}$imageName.png";
+  }
+
+  Future<String> savePostImage(Uint8List data) async {
+    var imagePath = _getPostImagePath(_getPostName(_currentFile!));
+    var file = File(imagePath);
+    await file.writeAsBytes(data);
+    return file.uri.pathSegments.last;
   }
 
   Future<File?> createNewFile(String name) async {

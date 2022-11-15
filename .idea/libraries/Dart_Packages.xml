@@ -191,6 +191,13 @@
             </list>
           </value>
         </entry>
+        <entry key="pasteboard">
+          <value>
+            <list>
+              <option value="$USER_HOME$/development/flutter/.pub-cache/hosted/pub.flutter-io.cn/pasteboard-0.2.0/lib" />
+            </list>
+          </value>
+        </entry>
         <entry key="path">
           <value>
             <list>
@@ -323,6 +330,7 @@
       <root url="file://$USER_HOME$/development/flutter/.pub-cache/hosted/pub.flutter-io.cn/material_color_utilities-0.1.5/lib" />
       <root url="file://$USER_HOME$/development/flutter/.pub-cache/hosted/pub.flutter-io.cn/meta-1.8.0/lib" />
       <root url="file://$USER_HOME$/development/flutter/.pub-cache/hosted/pub.flutter-io.cn/nested-1.0.0/lib" />
+      <root url="file://$USER_HOME$/development/flutter/.pub-cache/hosted/pub.flutter-io.cn/pasteboard-0.2.0/lib" />
       <root url="file://$USER_HOME$/development/flutter/.pub-cache/hosted/pub.flutter-io.cn/path-1.8.2/lib" />
       <root url="file://$USER_HOME$/development/flutter/.pub-cache/hosted/pub.flutter-io.cn/plugin_platform_interface-2.1.2/lib" />
       <root url="file://$USER_HOME$/development/flutter/.pub-cache/hosted/pub.flutter-io.cn/provider-6.0.4/lib" />
