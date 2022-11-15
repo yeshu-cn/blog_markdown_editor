@@ -73,63 +73,7 @@ class _HomePageState extends State<HomePage> {
             ),
             centerTitle: true,
             title: Text(_getTitle(model)),
-            actions: [
-              IconButton(
-                  onPressed: () async {
-                    await model.openSourceDir();
-                  },
-                  tooltip: 'open dir',
-                  icon: const Icon(Icons.folder_open_rounded)),
-              IconButton(
-                  onPressed: () async {
-                    model.saveFile(_controller.text);
-                  },
-                  tooltip: 'save file',
-                  icon: Icon(
-                    Icons.save,
-                    color: model.fileChanged ? Colors.blue : Colors.white,
-                  )),
-              IconButton(
-                  onPressed: () async {},
-                  tooltip: 'upload',
-                  icon: const Icon(
-                    Icons.cloud_upload_rounded,
-                  )),
-              IconButton(
-                  onPressed: () async {
-                    model.build();
-                  },
-                  tooltip: 'build',
-                  icon: const Icon(
-                    Icons.archive_outlined,
-                  )),
-              IconButton(
-                  onPressed: () async {
-                    model.run();
-                  },
-                  tooltip: 'launch',
-                  icon: const Icon(
-                    Icons.rocket_launch_outlined,
-                  )),
-              // 新建文章
-              IconButton(
-                  onPressed: () async {
-                    _showCreateNewFileDialog(model);
-                  },
-                  tooltip: 'new file',
-                  icon: const Icon(
-                    Icons.create_rounded,
-                  )),
-              // 删除文章
-              IconButton(
-                  onPressed: () async {
-                    _showDeleteDialog(model);
-                  },
-                  tooltip: 'delete file',
-                  icon: const Icon(
-                    Icons.delete_rounded,
-                  )),
-            ],
+            actions: _getActionList(),
           ),
           body: SplitView(
             controller: SplitViewController(weights: getViewWeights(model.isShowFileListView())),
@@ -232,6 +176,80 @@ class _HomePageState extends State<HomePage> {
           children: _buildFileListWidget(model),
         ),
       );
+    }
+  }
+
+  List<Widget> _getActionList() {
+    var model = Provider.of<HomeModel>(context);
+    if (model.isInitSourceDir()) {
+      return [
+        IconButton(
+            onPressed: () async {
+              await model.openSourceDir();
+            },
+            tooltip: 'open dir',
+            icon: const Icon(Icons.folder_open_rounded)),
+        IconButton(
+            onPressed: () async {
+              model.saveFile(_controller.text);
+            },
+            tooltip: 'save file',
+            icon: Icon(
+              Icons.save,
+              color: model.fileChanged ? Colors.blue : Colors.white,
+            )),
+        IconButton(
+            onPressed: () async {},
+            tooltip: 'upload',
+            icon: const Icon(
+              Icons.cloud_upload_rounded,
+            )),
+        IconButton(
+            onPressed: () async {
+              _showProgressDialog();
+              await model.build();
+              Navigator.of(context).pop();
+            },
+            tooltip: 'build',
+            icon: const Icon(
+              Icons.archive_outlined,
+            )),
+        IconButton(
+            onPressed: () async {
+              model.run();
+            },
+            tooltip: 'launch',
+            icon: const Icon(
+              Icons.rocket_launch_outlined,
+            )),
+        // 新建文章
+        IconButton(
+            onPressed: () async {
+              _showCreateNewFileDialog(model);
+            },
+            tooltip: 'new file',
+            icon: const Icon(
+              Icons.create_rounded,
+            )),
+        // 删除文章
+        IconButton(
+            onPressed: () async {
+              _showDeleteDialog(model);
+            },
+            tooltip: 'delete file',
+            icon: const Icon(
+              Icons.delete_rounded,
+            )),
+      ];
+    } else {
+      return [
+        IconButton(
+            onPressed: () async {
+              await model.openSourceDir();
+            },
+            tooltip: 'open dir',
+            icon: const Icon(Icons.folder_open_rounded)),
+      ];
     }
   }
 
@@ -347,25 +365,21 @@ class _HomePageState extends State<HomePage> {
     debugPrint(cdata?.text);
     final imageBytes = await Pasteboard.image;
     debugPrint('image bytes length: ${imageBytes?.length}');
-    if (null != imageBytes) {
+    if (null != imageBytes && null != model.currentFile) {
       var imagePath = await model.savePostImage(imageBytes);
       // 光标处添加字符
-      var cursorPos =
-          _controller.selection.base.offset;
+      var cursorPos = _controller.selection.base.offset;
       // Right text of cursor position
-      String suffixText =
-      _controller.text.substring(cursorPos);
+      String suffixText = _controller.text.substring(cursorPos);
 
       // Add new text on cursor position
       String specialChars = '![]($imagePath)';
       int length = specialChars.length;
 
       // Get the left text of cursor
-      String prefixText =
-      _controller.text.substring(0, cursorPos);
+      String prefixText = _controller.text.substring(0, cursorPos);
 
-      _controller.text =
-          prefixText + specialChars + suffixText;
+      _controller.text = prefixText + specialChars + suffixText;
 
       // Cursor move to end of added text
       _controller.selection = TextSelection(
@@ -373,5 +387,32 @@ class _HomePageState extends State<HomePage> {
         extentOffset: cursorPos + length,
       );
     }
+  }
+
+  void _showProgressDialog() {
+    showDialog(
+        barrierDismissible: false,
+        context: context,
+        builder: (_) {
+          return Dialog(
+            // The background color
+            backgroundColor: Colors.white,
+            child: Padding(
+              padding: const EdgeInsets.symmetric(vertical: 20),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: const [
+                  // The loading indicator
+                  CircularProgressIndicator(),
+                  SizedBox(
+                    height: 15,
+                  ),
+                  // Some text
+                  Text('Loading...')
+                ],
+              ),
+            ),
+          );
+        });
   }
 }

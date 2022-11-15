@@ -131,8 +131,8 @@ class HomeModel extends ChangeNotifier {
     }
   }
 
-  void build() {
-    generateBlogData(postSourcePath: getPostSourcePath(), assetsPath: getAssetsPath(), webPath: getWebPath());
+  Future<void> build() async {
+    await generateBlogData(postSourcePath: getPostSourcePath(), assetsPath: getAssetsPath(), webPath: getWebPath());
   }
 
   void run() async {

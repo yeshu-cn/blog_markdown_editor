@@ -121,7 +121,7 @@ Future<PostDetail> parsePostDetailWithImage(Directory dir) async {
   return postDetail;
 }
 
-void generateBlogData({required String postSourcePath, required String assetsPath, required String webPath}) async {
+Future<void> generateBlogData({required String postSourcePath, required String assetsPath, required String webPath}) async {
   _postSourcePath = postSourcePath;
   _assetsPath = assetsPath;
   _webPath = webPath;
