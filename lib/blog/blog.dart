@@ -4,6 +4,7 @@ import 'package:blog_markdown_editor/blog/category_item.dart';
 import 'package:blog_markdown_editor/blog/post_detail.dart';
 import 'package:blog_markdown_editor/blog/post_item.dart';
 import 'package:collection/collection.dart';
+import 'package:flutter/foundation.dart';
 import 'package:intl/intl.dart';
 
 
@@ -22,7 +23,7 @@ void createPostsApi(List<PostItem> data) {
   File file = File('$_assetsPath/api/posts.json');
   file.writeAsString(jsonData);
 
-  print('create posts.json file :${file.path}, post count: ${data.length}');
+  debugPrint('create posts.json file :${file.path}, post count: ${data.length}');
 }
 
 // categories.json
@@ -31,7 +32,7 @@ void createCategoryApi(List<CategoryItem> data) {
   File file = File('$_assetsPath/api/categories.json');
   file.writeAsString(jsonData);
 
-  print('create categories.json file :${file.path}, category count: ${data.length}');
+  debugPrint('create categories.json file :${file.path}, category count: ${data.length}');
 }
 
 // title_createTime.json
@@ -40,7 +41,7 @@ Future<void> createPostDetail(PostDetail data) async {
   File file = File('$_assetsPath/post/${data.createTime}.json');
   file.writeAsString(jsonData);
 
-  print('create post detail json file:${file.path}');
+  debugPrint('create post detail json file:${file.path}');
 }
 
 void copyImageToWebDir(int postCreateTime, File imageFile) {
@@ -162,7 +163,7 @@ void generateBlogData({required String postSourcePath, required String assetsPat
     });
     createCategoryApi(categories);
   } catch (e) {
-    print('generateBlogData error: $e');
+    debugPrint('generateBlogData error: $e');
   }
 }
 
@@ -170,6 +171,6 @@ void testReadFile() {
   var file = File('./data/test.md');
   var lines = file.readAsLinesSync();
   lines.forEachIndexed((index, element) {
-    print(element);
+    debugPrint(element);
   });
 }

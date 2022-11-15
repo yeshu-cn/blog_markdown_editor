@@ -1,15 +1,14 @@
 import 'dart:io';
-
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/cupertino.dart';
-
+import 'package:intl/intl.dart';
 import 'blog/blog.dart';
 
 class HomeModel extends ChangeNotifier {
   Directory? _sourceDir;
-  File? currentFile;
+  File? _currentFile;
   bool _showFileListView = true;
-  bool fileChanged = false;
+  bool _fileChanged = false;
 
   Future<void> openSourceDir() async {
     String? selectedDirectory =
@@ -20,17 +19,22 @@ class HomeModel extends ChangeNotifier {
     notifyListeners();
   }
 
+  File? get currentFile => _currentFile;
+
+  bool get fileChanged => _fileChanged;
+
   void openFile(File file) async {
-    currentFile = file;
+    _currentFile = file;
     notifyListeners();
   }
 
   Future<void> saveFile(String content) async {
+    debugPrint('save file');
     if (null == currentFile) {
       return;
     }
     await currentFile!.writeAsString(content);
-    fileChanged = false;
+    _fileChanged = false;
     notifyListeners();
   }
 
@@ -40,11 +44,7 @@ class HomeModel extends ChangeNotifier {
   }
 
   void toggleFileChanged(bool changed) {
-    // if (fileChanged == changed) {
-    //   // 如果没有发生变化则不刷新界面
-    //   return;
-    // }
-    fileChanged = true;
+    _fileChanged = true;
     notifyListeners();
   }
 
@@ -72,13 +72,64 @@ class HomeModel extends ChangeNotifier {
     return _showFileListView;
   }
 
+  // 删除目录，或者文件
+  void deleteFile() async {
+    var postName = _getPostName(_currentFile!);
+    var dirPath = _getPostDirPath(postName);
+    debugPrint('delete file: $dirPath');
+    var postDir = Directory(dirPath);
+    if (await postDir.exists()) {
+      await postDir.delete(recursive: true);
+    } else {
+      _currentFile?.delete();
+    }
+    _currentFile = null;
+    notifyListeners();
+  }
+
+  String _getPostName(File postFile) {
+    return postFile.uri.pathSegments.last.replaceAll('.md', '');
+  }
+
+  String _getPostFilePath(String postName) {
+    return "${getPostSourcePath()}${Platform.pathSeparator}$postName${Platform.pathSeparator}$postName.md";
+  }
+
+  String _getPostDirPath(String postName) {
+    return "${getPostSourcePath()}${Platform.pathSeparator}$postName";
+  }
+
+  Future<File?> createNewFile(String name) async {
+    var postPath = _getPostFilePath(name);
+    File file = File(postPath);
+    try {
+      file.createSync(recursive: true);
+      var dateFormat = DateFormat('yyyy-MM-dd hh:mm:ss');
+      var date = dateFormat.format(DateTime.now());
+      await file.writeAsString('---\n', mode: FileMode.append);
+      await file.writeAsString('title: $name\n', mode: FileMode.append);
+      await file.writeAsString('date: $date\n', mode: FileMode.append);
+      await file.writeAsString('tags: \n', mode: FileMode.append);
+      await file.writeAsString('categories: \n', mode: FileMode.append);
+      await file.writeAsString('---\n', mode: FileMode.append);
+      return file;
+    } catch (e) {
+      return null;
+    }
+  }
 
   void build() {
     generateBlogData(postSourcePath: getPostSourcePath(), assetsPath: getAssetsPath(), webPath: getWebPath());
   }
 
   void run() async {
-    var result = await Process.run('grep', ['-i', 'main', 'test.dart']);
+    var rootPath = _sourceDir!.path;
+    debugPrint('root path is $rootPath');
+    // var result = await Process.run('ls', [], workingDirectory: rootPath);
+    // stdout.write(result.stdout);
+    // stderr.write(result.stderr);
+    // flutter run -d chrome --web-renderer html &
+    var result = await Process.run('flutter', ['run', '-d', 'chrome', '--web-renderer', 'html'], workingDirectory: rootPath);
     stdout.write(result.stdout);
     stderr.write(result.stderr);
   }

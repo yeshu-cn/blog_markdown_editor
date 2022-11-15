@@ -1,6 +1,8 @@
+import 'package:blog_markdown_editor/home_model.dart';
 import 'package:blog_markdown_editor/home_page.dart';
 import 'package:flutter/material.dart';
 import 'package:hotkey_manager/hotkey_manager.dart';
+import 'package:provider/provider.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -18,7 +20,10 @@ class MyApp extends StatelessWidget {
       title: 'Markdown Editor',
       debugShowCheckedModeBanner: false,
       theme: ThemeData(primarySwatch: Colors.teal),
-      home: const HomePage(title: 'Markdown Editor'),
+      home: ChangeNotifierProvider(
+        create: (_) => HomeModel(),
+        child: const HomePage(title: 'Markdown Editor'),
+      ),
     );
   }
 }

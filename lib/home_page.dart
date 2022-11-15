@@ -17,6 +17,7 @@ class HomePage extends StatefulWidget {
 
 class _HomePageState extends State<HomePage> {
   final TextEditingController _controller = TextEditingController();
+  final TextEditingController _newFileController = TextEditingController();
   final HotKey _hotKey = HotKey(
     KeyCode.keyS,
     modifiers: [KeyModifier.meta],
@@ -33,110 +34,113 @@ class _HomePageState extends State<HomePage> {
     await hotKeyManager.register(
       _hotKey,
       keyDownHandler: (hotKey) {
-        print('onKeyDown+${hotKey.toJson()}');
-        // var model = Provider.of<HomeModel>(context, listen: false);
-        // model.saveFile(_controller.text);
+        debugPrint('onKeyDown+${hotKey.toJson()}');
+        var model = Provider.of<HomeModel>(context, listen: false);
+        model.saveFile(_controller.text);
       },
     );
   }
 
   @override
   Widget build(BuildContext context) {
-    return ChangeNotifierProvider(
-      create: (context) => HomeModel(),
-      child: Consumer<HomeModel>(
-        builder: (context, model, child) {
-          return Scaffold(
-            appBar: AppBar(
-              backgroundColor: const Color(0xff444444),
-              elevation: 0,
-              leading: IconButton(
-                onPressed: () {
-                  model.toggleFileListView();
-                },
-                icon: const Icon(Icons.vertical_split_rounded),
+    return Consumer<HomeModel>(
+      builder: (context, model, child) {
+        return Scaffold(
+          appBar: AppBar(
+            backgroundColor: const Color(0xff444444),
+            elevation: 0,
+            leading: IconButton(
+              onPressed: () {
+                model.toggleFileListView();
+              },
+              icon: const Icon(Icons.vertical_split_rounded),
+            ),
+            centerTitle: true,
+            title: Text(_getTitle(model)),
+            actions: [
+              IconButton(
+                  onPressed: () async {
+                    await model.openSourceDir();
+                  },
+                  tooltip: 'open dir',
+                  icon: const Icon(Icons.folder_open_rounded)),
+              IconButton(
+                  onPressed: () async {
+                    model.saveFile(_controller.text);
+                  },
+                  tooltip: 'save file',
+                  icon: Icon(
+                    Icons.save,
+                    color: model.fileChanged ? Colors.blue : Colors.white,
+                  )),
+              IconButton(
+                  onPressed: () async {},
+                  tooltip: 'upload',
+                  icon: const Icon(
+                    Icons.cloud_upload_rounded,
+                  )),
+              IconButton(
+                  onPressed: () async {
+                    model.build();
+                  },
+                  tooltip: 'build',
+                  icon: const Icon(
+                    Icons.archive_outlined,
+                  )),
+              IconButton(
+                  onPressed: () async {
+                    model.run();
+                  },
+                  tooltip: 'launch',
+                  icon: const Icon(
+                    Icons.rocket_launch_outlined,
+                  )),
+              // 新建文章
+              IconButton(
+                  onPressed: () async {
+                    _showCreateNewFileDialog(model);
+                  },
+                  tooltip: 'new file',
+                  icon: const Icon(
+                    Icons.create_rounded,
+                  )),
+              // 删除文章
+              IconButton(
+                  onPressed: () async {
+                    _showDeleteDialog(model);
+                  },
+                  tooltip: 'delete file',
+                  icon: const Icon(
+                    Icons.delete_rounded,
+                  )),
+            ],
+          ),
+          body: SplitView(
+            controller: SplitViewController(weights: getViewWeights(model.isShowFileListView())),
+            viewMode: SplitViewMode.Horizontal,
+            gripSize: 1,
+            gripColor: const Color(0xffc5c2c7),
+            // indicator: const SplitIndicator(viewMode: SplitViewMode.Horizontal),
+            // activeIndicator: const SplitIndicator(
+            //   viewMode: SplitViewMode.Horizontal,
+            //   isActive: true,
+            // ),
+            children: [
+              if (model.isShowFileListView())
+                Container(
+                  color: const Color(0xFFDEDCE1),
+                  child: _buildFileList(model),
+                ),
+              Container(
+                child: _buildEditor(model),
               ),
-              centerTitle: true,
-              title: Text(_getTitle(model)),
-              actions: [
-                IconButton(
-                    onPressed: () async {
-                     await model.openSourceDir();
-                    },
-                    tooltip: 'open dir',
-                    icon: const Icon(Icons.folder_open_rounded)),
-                IconButton(
-                    onPressed: () async {
-                      model.saveFile(_controller.text);
-                    },
-                    tooltip: 'save file',
-                    icon: Icon(
-                      Icons.save,
-                      color: model.fileChanged ? Colors.blue : Colors.white,
-                    )),
-                IconButton(
-                    onPressed: () async {},
-                    tooltip: 'upload',
-                    icon: const Icon(
-                      Icons.cloud_upload_rounded,
-                    )),
-                IconButton(
-                    onPressed: () async {
-                      model.build();
-                    },
-                    tooltip: 'build',
-                    icon: const Icon(
-                      Icons.archive_outlined,
-                    )),
-                IconButton(
-                    onPressed: () async {},
-                    tooltip: 'launch',
-                    icon: const Icon(
-                      Icons.rocket_launch_outlined,
-                    )),
-                // 新建文章
-                IconButton(
-                    onPressed: () async {},
-                    tooltip: 'new file',
-                    icon: const Icon(
-                      Icons.create_rounded,
-                    )),
-                // 删除文章
-                IconButton(
-                    onPressed: () async {},
-                    tooltip: 'delete file',
-                    icon: const Icon(
-                      Icons.delete_rounded,
-                    )),
-              ],
-            ),
-            body: SplitView(
-              controller: SplitViewController(weights: getViewWeights(model.isShowFileListView())),
-              viewMode: SplitViewMode.Horizontal,
-              gripSize: 1,
-              gripColor: const Color(0xffc5c2c7),
-              // indicator: const SplitIndicator(viewMode: SplitViewMode.Horizontal),
-              // activeIndicator: const SplitIndicator(
-              //   viewMode: SplitViewMode.Horizontal,
-              //   isActive: true,
-              // ),
-              children: [
-                if (model.isShowFileListView())
-                  Container(
-                    color: const Color(0xFFDEDCE1),
-                    child: _buildFileList(model),
-                  ),
-                Container(
-                  child: _buildEditor(model),
-                ),
-                Container(
-                  child: _buildPreview(model),
-                ),
-              ],
-            ),
-          );
-        },
-      ),
+              Container(
+                child: _buildPreview(model),
+              ),
+            ],
+          ),
+        );
+      },
     );
   }
 
@@ -275,6 +279,50 @@ class _HomePageState extends State<HomePage> {
       return widget.title;
     } else {
       return model.currentFile!.uri.pathSegments.last;
+    }
+  }
+
+  void _showCreateNewFileDialog(HomeModel model) async {
+    var ret = await showDialog(
+        context: context,
+        builder: (BuildContext context) {
+          return AlertDialog(
+            title: const Text('New file'),
+            content: TextField(
+              controller: _newFileController,
+              decoration: const InputDecoration(hintText: "Input file name"),
+            ),
+            actions: [
+              ElevatedButton(onPressed: () => Navigator.pop(context), child: const Text('Cancel')),
+              ElevatedButton(
+                  onPressed: () => Navigator.pop(context, _newFileController.text.trim()), child: const Text('Confirm'))
+            ],
+          );
+        });
+    if (null != ret) {
+      var file = await model.createNewFile(ret);
+      if (null != file) {
+        _controller.text = await file.readAsString();
+        model.openFile(file);
+      } else {}
+    }
+  }
+
+  void _showDeleteDialog(HomeModel model) async {
+    var ret = await showDialog(
+        context: context,
+        builder: (BuildContext context) {
+          return AlertDialog(
+            title: const Text('Delete file'),
+            actions: [
+              ElevatedButton(onPressed: () => Navigator.pop(context, false), child: const Text('Cancel')),
+              ElevatedButton(onPressed: () => Navigator.pop(context, true), child: const Text('Confirm'))
+            ],
+          );
+        });
+    if (ret) {
+      _controller.text = '';
+      model.deleteFile();
     }
   }
 }
