@@ -208,6 +208,7 @@ class _HomePageState extends State<HomePage> {
             onPressed: () async {
               _showProgressDialog();
               await model.build();
+              if (!mounted) return;
               Navigator.of(context).pop();
             },
             tooltip: 'build',
